@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>防本机扫码二维码</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      text-align: center;
+      background: #f7f8fa;
+      color: #333;
+    }
+    h2 { margin-bottom: 8px; }
+    .tip { color: #666; font-size: 14px; margin: 12px 0 24px; }
+    button {
+      background: #1677ff;
+      color: white;
+      border: none;
+      padding: 12px 28px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover { background: #0958d9; }
+    #qrcode {
+      margin: 28px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      display: inline-block;
+    }
+    #qrcode canvas { display: block; }
+    .url {
+      font-size: 12px;
+      color: #888;
+      word-break: break-all;
+      margin-top: 16px;
+      max-width: 280px;
+    }
+  </style>
+</head>
+<body>
+  <h2>防本机扫码二维码</h2>
+  <p class="tip">本机扫会提示禁止，其他手机扫可正常跳转</p>
+  <button onclick="generate()">重新生成二维码</button>
+  <div id="qrcode"></div>
+
+  <script>
+    function generate() {
+      // 1. 生成随机 id
+      const id = crypto.randomUUID();
+
+      // 2. 存到 localStorage + Cookie（10 分钟有效）
+      localStorage.setItem('anti_scan_id', id);
+      document.cookie = `anti_scan_id=${id}; path=/; max-age=600; SameSite=Lax`;
+
+      // 3. 二维码指向的地址
+      const url = `${location.origin}/api/scan?id=${id}`;
+
+      // 4. 生成二维码
+      const container = document.getElementById('qrcode');
+      container.innerHTML = '';
+      QRCode.toCanvas(container, url, {
+        width: 260,
+        margin: 2,
+        color: { dark: '#000000', light: '#ffffff' }
+      }, function (error) {
+        if (error) {
+          console.error(error);
+          container.innerHTML = '<p style="color:red">生成失败</p>';
+          return;
+        }
+        // 显示链接方便调试
+        const p = document.createElement('p');
+        p.className = 'url';
+        p.textContent = url;
+        container.appendChild(p);
+      });
+    }
+
+    // 页面加载自动生成
+    generate();
+  </script>
+</body>
+</html>
